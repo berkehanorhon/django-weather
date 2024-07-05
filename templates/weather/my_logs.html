@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}My Query Logs{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h2 class="mb-4">My Query Logs</h2>
+        <div id="query-logs">
+            <!-- Query results will be dynamically added here -->
+        </div>
+    </div>
+
+    <script>
+        // Function to format ISO date to dd.mm.yyyy hour.min.secs
+        function formatQueryTime(isoDate) {
+            const date = new Date(isoDate);
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear().toString();
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const seconds = date.getSeconds().toString().padStart(2, '0');
+            return `${day}.${month}.${year} - ${hours}:${minutes}:${seconds}`;
+        }
+
+        // Function to fetch query logs from the API
+        function fetchLogs() {
+            fetch('/api/get_my_logs')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch query logs');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Select the query logs container
+                    const queryLogsContainer = document.getElementById('query-logs');
+                    queryLogsContainer.innerHTML = ''; // Clear previous content
+
+                    // Iterate over each log and create HTML elements
+                    data.forEach(log => {
+                        const logHtml = `
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">${log.location__name}</h5>
+                                    <p class="card-text">Query Time: ${formatQueryTime(log.query_time)}</p>
+                                    <p class="card-text">User IP: ${log.user_ip}</p>
+                                    <p class="card-text">Query Result: ${log.query_result}</p>
+                                    <p class="card-text">Query Duration: ${log.query_duration} ms</p>
+                                    <p class="card-text">Status: ${log.status}</p>
+                                </div>
+                            </div>
+                        `;
+                        queryLogsContainer.innerHTML += logHtml;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching query logs:', error);
+                    // Display an error message on failure
+                    const queryLogsContainer = document.getElementById('query-logs');
+                    queryLogsContainer.innerHTML = '<p>Error fetching query logs. Please try again later.</p>';
+                });
+        }
+
+        // Call fetchLogs when the page loads
+        fetchLogs();
+    </script>
+{% endblock %}
