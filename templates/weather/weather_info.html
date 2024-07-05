@@ -1,100 +1,150 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Information</title>
-    <style>
-        /* Basit CSS */
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            text-align: center;
-        }
-        .weather-card {
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 10px;
-            max-width: 400px; /* Optionally limit width */
-            margin: auto; /* Center horizontally */
-        }
-        .weather-card img {
-            max-width: 50px;
-            max-height: 50px;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block content %}
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Weather Information</title>
+        <style>
+            /* Basit CSS */
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                font-family: Arial, sans-serif;
+            }
+
+            .container {
+                text-align: center;
+            }
+
+            .weather-card {
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                padding: 10px;
+                margin-bottom: 10px;
+                max-width: 400px; /* Optionally limit width */
+                margin: auto; /* Center horizontally */
+            }
+
+            .weather-card img {
+                max-width: 50px;
+                max-height: 50px;
+            }
+        </style>
+    </head>
+    <body>
     <div class="container">
-        <h2 id="weather-title">Weather Information for City</h2>
+        <h2 id="weather-title">Weather Information</h2>
+        <select id="location-select" onchange="fetchWeather()">
+            <option value="" disabled selected>Select a location</option>
+            <!-- Location options will be dynamically added here -->
+        </select>
         <div id="weather-info">
             <!-- Burada hava durumu bilgileri yer alacak -->
         </div>
     </div>
 
     <script>
-        // URL'den locationId parametresini alıyoruz
-        const urlParams = new URLSearchParams(window.location.search);
-        const locationId = {{ location_id }};
+        // Function to fetch all locations
+        function fetchLocations() {
+            const locationsApiUrl = `http://localhost:8000/api/all_locations/?format=json`;
 
-        // API URL'sini oluşturuyoruz
-        const apiUrl = `http://localhost:8000/api/location/${locationId}/?format=json`;
+            fetch(locationsApiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(locations => {
+                    const locationSelect = document.getElementById('location-select');
+                    locations.forEach(location => {
+                        const option = document.createElement('option');
+                        option.value = location.id;
+                        option.text = location.name;
+                        locationSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching locations:', error);
+                    // Hata durumunda kullanıcıya bilgi verilebilir
+                    const locationSelect = document.getElementById('location-select');
+                    const errorOption = document.createElement('option');
+                    errorOption.value = "";
+                    errorOption.text = "Failed to fetch locations";
+                    locationSelect.appendChild(errorOption);
+                });
+        }
 
-        // API'den veri almak için fetch kullanıyoruz
-        fetch(apiUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(weatherData => {
-                // HTML içine veri yerleştirme işlemi
-                const weatherInfoDiv = document.getElementById('weather-info');
+        // Function to fetch weather data for selected location
+        function fetchWeather() {
+            const locationSelect = document.getElementById('location-select');
+            const locationId = locationSelect.value;
 
-                // Location bilgilerini oluşturma
-                const locationHtml = `
-                    <div class="weather-card">
-                        <h3>${weatherData.location.name}</h3>
-                        <p>Region: ${weatherData.location.region}</p>
-                        <p>Country: ${weatherData.location.country}</p>
-                        <p>Local Time: ${weatherData.location.localtime}</p>
-                    </div>
-                `;
-                weatherInfoDiv.innerHTML += locationHtml;
+            if (!locationId) return;
 
-                // Current hava durumu bilgilerini oluşturma
-                const currentHtml = `
-                    <div class="weather-card">
-                        <h4>Current Weather</h4>
-                        <p>Last Updated: ${weatherData.current.last_updated}</p>
-                        <p>Condition: ${weatherData.current.condition.text}</p>
-                        <img src="https:${weatherData.current.condition.icon}" alt="${weatherData.current.condition.text}">
-                        <p>Wind Speed: ${weatherData.current.wind_kph} km/h</p>
-                        <p>Humidity: ${weatherData.current.humidity}%</p>
-                        <p>Feels Like: ${weatherData.current.feelslike_c} °C / ${weatherData.current.feelslike_f} °F</p>
-                        <p>UV Index: ${weatherData.current.uv}</p>
-                    </div>
-                `;
-                weatherInfoDiv.innerHTML += currentHtml;
+            // API URL'sini oluşturuyoruz
+            const apiUrl = `http://localhost:8000/api/location/${locationId}/?format=json`;
 
-                // Başlık kısmını güncelleme
-                const weatherTitle = document.getElementById('weather-title');
-                weatherTitle.innerText = `Weather Information for ${weatherData.location.name}`;
-            })
-            .catch(error => {
-                console.error('Error fetching weather data:', error);
-                // Hata durumunda kullanıcıya bilgi verilebilir
-                const weatherInfoDiv = document.getElementById('weather-info');
-                weatherInfoDiv.innerHTML = '<p>Failed to fetch weather data.</p>';
-            });
+            // API'den veri almak için fetch kullanıyoruz
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(weatherData => {
+                    // HTML içine veri yerleştirme işlemi
+                    const weatherInfoDiv = document.getElementById('weather-info');
+                    weatherInfoDiv.innerHTML = '';
+
+                    // Location bilgilerini oluşturma
+                    const locationHtml = `
+                        <div class="weather-card">
+                            <h3>${weatherData.location.name}</h3>
+                            <p>Region: ${weatherData.location.region}</p>
+                            <p>Country: ${weatherData.location.country}</p>
+                            <p>Local Time: ${weatherData.location.localtime}</p>
+                        </div>
+                    `;
+                    weatherInfoDiv.innerHTML += locationHtml;
+
+                    // Current hava durumu bilgilerini oluşturma
+                    const currentHtml = `
+                        <div class="weather-card">
+                            <h4>Current Weather</h4>
+                            <p>Last Updated: ${weatherData.current.last_updated}</p>
+                            <p>Condition: ${weatherData.current.condition.text}</p>
+                            <img src="https:${weatherData.current.condition.icon}" alt="${weatherData.current.condition.text}">
+                            <p>Wind Speed: ${weatherData.current.wind_kph} km/h</p>
+                            <p>Humidity: ${weatherData.current.humidity}%</p>
+                            <p>Temperatures: ${weatherData.current.heatindex_c} °C / ${weatherData.current.heatindex_f} °F</p>
+                            <p>Feels Like: ${weatherData.current.feelslike_c} °C / ${weatherData.current.feelslike_f} °F</p>
+                            <p>UV Index: ${weatherData.current.uv}</p>
+                        </div>
+                    `;
+                    weatherInfoDiv.innerHTML += currentHtml;
+
+                    // Başlık kısmını güncelleme
+                    const weatherTitle = document.getElementById('weather-title');
+                    weatherTitle.innerText = `Weather Information for ${weatherData.location.name}`;
+                })
+                .catch(error => {
+                    console.error('Error fetching weather data:', error);
+                    // Hata durumunda kullanıcıya bilgi verilebilir
+                    const weatherInfoDiv = document.getElementById('weather-info');
+                    weatherInfoDiv.innerHTML = '<p>Failed to fetch weather data.</p>';
+                });
+        }
+
+        // Fetch locations on page load
+        window.onload = fetchLocations;
     </script>
-</body>
-</html>
+    </body>
+    </html>
+{% endblock %}

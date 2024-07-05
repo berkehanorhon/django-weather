@@ -34,7 +34,7 @@ class CurrentSerializer(serializers.Serializer):
 
 class LocationSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100)
-    region = serializers.CharField(max_length=100)
+    region = serializers.CharField(max_length=100, allow_blank=True)
     country = serializers.CharField(max_length=100)
     lat = serializers.FloatField()
     lon = serializers.FloatField()

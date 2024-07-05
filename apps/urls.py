@@ -16,10 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from weather.views import get_weather_info
+from weather.views import get_weather_info, get_my_logs
+from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('location/<int:location_id>/', get_weather_info, name='get_weather_info'),
+    path('', TemplateView.as_view(template_name='index.html'), name='home'),
+    path('location/', get_weather_info, name='get_weather_info'),
     path("api/", include("weather.urls")),
+    path("auth/", include("users.urls")),
+    path('my_logs/', get_my_logs, name='get_my_logs'),
 ]
