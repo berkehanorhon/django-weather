@@ -35,6 +35,7 @@ def get_location_info(request, location_id):
 
         if serializer.is_valid():
             QueryLogEntity.status = 'SUCCESS'
+            QueryLogEntity.query_result = f'Temperatures: {serializer.data["current"]["heatindex_c"]} °C / {serializer.data["current"]["heatindex_f"]} °F'
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -45,7 +46,6 @@ def get_location_info(request, location_id):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     finally:
         QueryLogEntity.query_duration = time.time() - start
-        QueryLogEntity.query_result = 'DONE'
         QueryLogEntity.save()
 
 @api_view(['GET'])
